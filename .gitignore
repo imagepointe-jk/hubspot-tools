@@ -90,3 +90,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# custom
+src/env.js
