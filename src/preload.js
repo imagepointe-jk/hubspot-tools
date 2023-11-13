@@ -8,8 +8,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   processFiles: (path) => ipcRenderer.invoke("processFiles", path),
   handleUpdateMessage: (callback) => ipcRenderer.on("update-message", callback),
   handlePrintLog: (callback) => ipcRenderer.on("print-log", callback),
-  updateAccessToken: (token) => {
-    console.log("received " + token);
-    ipcRenderer.invoke("updateAccessToken", token);
-  },
+  updateAccessToken: (token) => ipcRenderer.invoke("updateAccessToken", token),
 });

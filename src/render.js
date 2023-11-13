@@ -8,7 +8,6 @@ const accessTokenField = document.getElementById("access-token-field");
 let selectedDirectory;
 
 accessTokenField.oninput = (event) => {
-  console.log("type is " + typeof event.target.value);
   window.electronAPI.updateAccessToken(event.target.value);
 };
 
