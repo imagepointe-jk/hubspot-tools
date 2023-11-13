@@ -1,6 +1,6 @@
 const moreThanOneValidDealNameError = "More than one valid deal name found.";
 const noValidDealNameError =
-  "No valid deal name found. It must start with S, followed by 2 zeros and exactly 5 more digits.";
+  "No valid deal name found. It must start with S, followed by 2 zeros and 5 more digits.";
 
 function tryGetDealNameFromFileName(fileName) {
   try {

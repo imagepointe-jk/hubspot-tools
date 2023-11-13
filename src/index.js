@@ -1,29 +1,78 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
-const { readdirSync } = require('fs');
-const path = require('path');
+const { app, BrowserWindow, dialog, ipcMain, Menu } = require("electron");
+const { readdirSync } = require("fs");
+const path = require("path");
+const findDealByName = require("./apiRequest");
+const { tryGetDealNameFromFileName } = require("./utility");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
+if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
 let mainWindow;
+let accessToken;
 
-async function handleDirectorySelect () {
+function updateMessage(newMessage) {
+  mainWindow.webContents.send("update-message", newMessage);
+}
+
+function printLog(message) {
+  mainWindow.webContents.send("print-log", message, false);
+}
+
+function printError(message) {
+  mainWindow.webContents.send("print-log", message, true);
+}
+
+function updateAccessToken(token) {
+  console.log("token is now " + token);
+  accessToken = token;
+}
+
+async function handleDirectorySelect() {
   const { canceled, filePaths } = await dialog.showOpenDialog({
-    properties: ["openDirectory"]
-  })
+    properties: ["openDirectory"],
+  });
   if (!canceled) {
-    mainWindow.webContents.send("update-message", "Folder Selected")
-    return filePaths[0]
+    updateMessage(`Ready to upload from ${filePaths[0]}`);
+    return filePaths[0];
   }
 }
 
-function processFiles(path) {
+async function processFiles(path) {
   const fileNames = readdirSync(path);
 
-  for (const n of fileNames) {
-    console.log(n);
+  for (const name of fileNames) {
+    try {
+      const fullPath = `${path}\\${name}`;
+      const dealNameResult = tryGetDealNameFromFileName(name);
+      if (dealNameResult.error) {
+        printError(
+          `Error on file ${name}: ${dealNameResult.error} File not uploaded.`,
+          true
+        );
+        continue;
+      }
+      const dealRequestResponse = await findDealByName(
+        dealNameResult.dealName,
+        accessToken
+      );
+      if (
+        dealRequestResponse.status === 401 ||
+        dealRequestResponse.status === 403
+      ) {
+        printError("HubSpot denied access. Please check your access token.");
+        break;
+      } else if (dealRequestResponse.status !== 200) {
+        throw new Error();
+      }
+
+      printLog(`Found deal ${dealNameResult.dealName}`);
+    } catch (error) {
+      console.log(error);
+      printError(`Unknown error on file ${name}. File not uploaded.`);
+      continue;
+    }
   }
 }
 
@@ -33,12 +82,12 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
     },
   });
-  
+
   // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, "index.html"));
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
@@ -47,22 +96,25 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  ipcMain.handle('dialog:openDirectory', handleDirectorySelect)
-  ipcMain.handle("processFiles", (event, arg) => processFiles(arg))
+app.on("ready", () => {
+  ipcMain.handle("dialog:openDirectory", handleDirectorySelect);
+  ipcMain.handle("processFiles", (event, path) => processFiles(path));
+  ipcMain.handle("updateAccessToken", (event, token) =>
+    updateAccessToken(token)
+  );
   createWindow();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-app.on('activate', () => {
+app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {

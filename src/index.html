@@ -5,9 +5,13 @@
     <title>Hello World!</title>
     <link rel="stylesheet" href="index.css" />
     <script defer src="render.js"></script>
+    <script defer src="env.js"></script>
   </head>
   <body>
-    <button onclick="clicked()">Click me!</button>
+    <input type="text" name="access-token-field" id="access-token-field">
+    <button onclick="clickedSelectFolder()">Select Folder</button>
     <div id="message-container"></div>
+    <button style="display:none;" id="upload-button" onclick="clickedUploadButton()">Start Upload</button>
+    <div id="log-container"></div>
   </body>
 </html>

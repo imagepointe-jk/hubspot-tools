@@ -5,3 +5,14 @@ body {
   max-width: 38rem;
   padding: 2rem;
 }
+
+#log-container {
+  border: 1px solid gray;
+  padding: 5px;
+  height: 200px;
+  overflow-y: scroll;
+}
+
+#log-container > div:nth-child(even) {
+  background-color: lightgray;
+}
