@@ -4,8 +4,10 @@ const messageContainer = document.getElementById("message-container");
 const uploadButton = document.getElementById("upload-button");
 const logContainer = document.getElementById("log-container");
 const accessTokenField = document.getElementById("access-token-field");
+const errorCounter = document.getElementById("error-counter");
 
 let selectedDirectory;
+let errorCount = 0;
 
 accessTokenField.oninput = (event) => {
   window.electronAPI.updateAccessToken(event.target.value);
@@ -18,8 +20,20 @@ async function clickedSelectFolder() {
   uploadButton.style.display = "block";
 }
 
+function clearLogs() {
+  errorCount = 0;
+  logContainer.innerHTML = "";
+  updateErrorCounter();
+}
+
 function clickedUploadButton() {
   window.electronAPI.processFiles(selectedDirectory);
+  clearLogs();
+}
+
+function updateErrorCounter() {
+  errorCounter.innerText = `Errors: ${errorCount}`;
+  errorCounter.style.color = errorCount > 0 ? "red" : "initial";
 }
 
 window.electronAPI.handleUpdateMessage((event, message) => {
@@ -32,6 +46,8 @@ window.electronAPI.handlePrintLog((event, message, isError) => {
   if (isError) {
     newLog.style.color = "red";
     newLog.innerText = `❗${newLog.innerText}`;
+    errorCount++;
+    updateErrorCounter();
   }
   logContainer.appendChild(newLog);
 });
