@@ -4,9 +4,12 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  //render process -> main process
   openDirectory: () => ipcRenderer.invoke("dialog:openDirectory"),
   processFiles: (path) => ipcRenderer.invoke("processFiles", path),
+  updateAccessToken: (token) => ipcRenderer.invoke("updateAccessToken", token),
+  //main process -> render process
   handleUpdateMessage: (callback) => ipcRenderer.on("update-message", callback),
   handlePrintLog: (callback) => ipcRenderer.on("print-log", callback),
-  updateAccessToken: (token) => ipcRenderer.invoke("updateAccessToken", token),
+  handleSuccess: (callback) => ipcRenderer.on("add-success", callback),
 });
