@@ -28,6 +28,25 @@ body {
 
 .log-info-container {
   text-align: initial;
+  display: flex;
+  gap: 5px;
+}
+
+#progress-bar-container {
+  flex: 1;
+  background-color: lightgray;
+  position: relative;
+  display: none;
+  border: 4px solid lightgray;
+}
+
+#progress-bar {
+  background-color: dodgerblue;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 100%;
+  position: absolute;
 }
 
 #log-container > div:nth-child(even) {
@@ -60,4 +79,8 @@ body {
 
 #upload-button:hover {
   background-color: rgb(110, 183, 255);
+}
+
+.finished-text {
+  font-weight: 700;
 }

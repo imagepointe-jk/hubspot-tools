@@ -2,7 +2,6 @@
 //! Some of the requests below use older API versions because no alternative was found.
 //! If problems arise, check whether the API version is still supported.
 
-const dummyNoteBody = require("./constants");
 const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
@@ -35,22 +34,6 @@ async function findDealByName(name, accessToken) {
   );
 }
 
-async function getDealWithNotes(dealId, accessToken) {
-  const myHeaders = new Headers();
-  myHeaders.append("Authorization", `Bearer ${accessToken}`);
-
-  const requestOptions = {
-    method: "GET",
-    headers: myHeaders,
-    redirect: "follow",
-  };
-
-  return fetch(
-    `https://api.hubapi.com/crm/v3/objects/deals/${dealId}?associations=notes`,
-    requestOptions
-  );
-}
-
 async function uploadFile(fullPath, hubSpotFolderPath, accessToken) {
   const data = new FormData();
   data.append("file", fs.createReadStream(fullPath));
@@ -77,7 +60,7 @@ async function uploadFile(fullPath, hubSpotFolderPath, accessToken) {
   return axios.request(config);
 }
 
-async function associateFileWithDeal(fileId, dealId, accessToken) {
+async function associateFileWithDeal(fileId, dealId, accessToken, note) {
   //Everything I could find told me that deals are associated with attachments via engagements.
   //The file is stored in the engagement itself.
   //This code creates a dummy note with the sole purpose of associating the deal with the file.
@@ -91,7 +74,7 @@ async function associateFileWithDeal(fileId, dealId, accessToken) {
       type: "NOTE",
     },
     metadata: {
-      body: dummyNoteBody,
+      body: note,
     },
     associations: {
       dealIds: [dealId],
@@ -120,5 +103,4 @@ module.exports = {
   findDealByName,
   uploadFile,
   associateFileWithDeal,
-  getDealWithNotes,
 };

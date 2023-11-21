@@ -5,7 +5,6 @@ const {
   findDealByName,
   uploadFile,
   associateFileWithDeal,
-  getDealWithNotes,
 } = require("./apiRequest");
 const { tryGetDealNameFromFileName } = require("./utility");
 
@@ -33,6 +32,11 @@ function addSuccess() {
   mainWindow.webContents.send("add-success");
 }
 
+//tell the display process how many files we found in the directory
+function setProgress(processed, total) {
+  mainWindow.webContents.send("set-progress", { processed, total });
+}
+
 async function handleDirectorySelect() {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ["openDirectory"],
@@ -45,10 +49,13 @@ async function handleDirectorySelect() {
 
 async function processFiles(path) {
   const fileNames = readdirSync(path);
+  const totalFiles = fileNames.length;
   const unknownErrorMessage = (fileName) =>
     `Unknown error on file ${fileName}. File not attached.`;
 
-  for (const fileName of fileNames) {
+  for (let i = 0; i < fileNames.length; i++) {
+    const fileName = fileNames[i];
+    setProgress(i, totalFiles);
     try {
       //extract the deal name from the file name
       const dealNameResult = tryGetDealNameFromFileName(fileName);
@@ -75,23 +82,8 @@ async function processFiles(path) {
         throw new Error(`Couldn't find deal ${dealName} for file ${fileName}`);
       }
 
-      //try to get more detailed deal data
-      const dealId = dealSearchJson.results[0].id;
-      const dealResponse = await getDealWithNotes(dealId, accessToken);
-      if (dealResponse.status !== 200) {
-        throw new Error("Error retrieving deal");
-      }
-      const dealJson = await dealResponse.json();
-      const dealNoteId = dealJson.associations?.notes.results[0].id;
-      //TODO: Depending on needs we may need to check more carefully as to whether this note means a file is attached
-      if (dealNoteId !== undefined) {
-        printLog(
-          `Deal ${dealName} seems to already have art attached; skipping.`
-        );
-        continue;
-      }
-
       //try to upload the file to hubspot
+      const dealId = dealSearchJson.results[0].id;
       const fullPath = `${path}\\${fileName}`;
       const fileUploadResponse = await uploadFile(
         fullPath,
@@ -107,7 +99,8 @@ async function processFiles(path) {
       const associateFileResponse = await associateFileWithDeal(
         uploadedFileID,
         dealId,
-        accessToken
+        accessToken,
+        `associate deal with file ${fileName}`
       );
       if (associateFileResponse.status !== 200) {
         throw new Error(unknownErrorMessage(fileName));
@@ -126,6 +119,7 @@ async function processFiles(path) {
       continue;
     }
   }
+  setProgress(totalFiles, totalFiles);
 }
 
 const createWindow = () => {

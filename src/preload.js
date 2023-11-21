@@ -12,4 +12,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   handleUpdateMessage: (callback) => ipcRenderer.on("update-message", callback),
   handlePrintLog: (callback) => ipcRenderer.on("print-log", callback),
   handleSuccess: (callback) => ipcRenderer.on("add-success", callback),
+  handleSetProgress: (callback) => ipcRenderer.on("set-progress", callback),
 });
